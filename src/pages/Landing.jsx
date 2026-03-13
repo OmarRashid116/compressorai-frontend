@@ -85,37 +85,37 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ── */}
-      <section ref={heroRef} className="relative h-screen flex items-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-screen flex items-center pt-20">
         <div className="absolute inset-0 bg-grid opacity-60" />
         <div className="absolute top-1/4 left-1/6 w-[500px] h-[500px] bg-yellow-400/4 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/6 w-[400px] h-[400px] bg-cyan-400/5 rounded-full blur-[80px] pointer-events-none" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/3 rounded-full blur-[120px] pointer-events-none" />
 
         <motion.div style={{ y: heroY, opacity: heroOpacity, pointerEvents: 'auto' }}
-          className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-4 items-center pt-16">
+          className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
 
           {/* Left text */}
           <motion.div initial={{ opacity:0, x:-50 }} animate={{ opacity:1, x:0 }}
             transition={{ duration:0.9, ease:[0.22,1,0.36,1] }}>
 
             <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6 mt-4"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 mt-0"
               style={{ border:'1px solid rgba(250,204,21,0.3)', background:'rgba(250,204,21,0.06)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
               <span className="text-yellow-400 text-xs font-mono tracking-wide">AI-Powered Industrial Solution</span>
             </motion.div>
 
-            <h1 className="font-display font-900 leading-[1.05] mb-5">
+            <h1 className="font-display font-900 leading-[1.05] mb-3">
               <motion.span initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
-                className="block text-white text-5xl lg:text-6xl">Industrial</motion.span>
+                className="block text-white text-4xl lg:text-5xl">Industrial</motion.span>
               <motion.span initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
-                className="block gradient-text-yellow text-5xl lg:text-7xl neon-yellow">Air Compressor</motion.span>
+                className="block gradient-text-yellow text-4xl lg:text-6xl neon-yellow">Air Compressor</motion.span>
               <motion.span initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5 }}
-                className="block text-white text-5xl lg:text-6xl">Optimizer</motion.span>
+                className="block text-white text-4xl lg:text-5xl">Optimizer</motion.span>
             </h1>
 
             <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.6 }}
-              className="text-slate-400 text-base leading-relaxed mb-7 max-w-xl">
+              className="text-slate-400 text-sm leading-relaxed mb-4 max-w-xl">
               Upload your compressor dataset and let our AI pipeline —
               <span className="text-cyan-400"> DBSCAN clustering</span>,
               <span className="text-yellow-400"> Gradient Boosting</span>, and
@@ -124,22 +124,22 @@ export default function Landing() {
             </motion.p>
 
             <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.7 }}
-              className="flex flex-wrap gap-4 mb-10 relative" style={{ zIndex: 10 }}>
+              className="flex flex-wrap gap-3 mb-4 relative" style={{ zIndex: 10 }}>
               <motion.button whileHover={{ scale:1.03, y:-2 }} whileTap={{ scale:0.97 }}
                 onClick={handleStart}
-                className="btn-primary flex items-center gap-2 text-base px-8 py-4">
+                className="btn-primary flex items-center gap-2 text-sm px-6 py-3">
                 Start Optimizing <ChevronRight size={18} />
               </motion.button>
               <motion.button whileHover={{ scale:1.03, y:-2 }} whileTap={{ scale:0.97 }}
                 onClick={() => navigate('/tutorial')}
-                className="btn-ghost-yellow flex items-center gap-2 text-base px-8 py-4">
+                className="btn-ghost-yellow flex items-center gap-2 text-sm px-6 py-3">
                 Watch Tutorial <ArrowRight size={16} />
               </motion.button>
             </motion.div>
 
             {/* Stats */}
             <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.9 }}
-              className="grid grid-cols-4 gap-4 pt-5 border-t border-white/5">
+              className="grid grid-cols-4 gap-3 pt-3 border-t border-white/5">
               {[
                 { end:99.2, suffix:'%',    label:'Model Accuracy' },
                 { end:20,   suffix:'%+',   label:'Energy Saving'  },
@@ -175,8 +175,8 @@ export default function Landing() {
             <div className="relative w-full rounded-2xl overflow-hidden"
               style={{
                 aspectRatio: '1 / 1',
-                height: '520px',
-                maxHeight: '520px',
+                height: '100%',
+                maxHeight: '460px',
                 background: 'radial-gradient(ellipse at center, rgba(8,20,40,0.6) 0%, rgba(4,10,20,0.95) 100%)',
                 border: '1px solid rgba(0,212,255,0.1)',
                 boxShadow: '0 0 60px rgba(0,212,255,0.06), 0 0 120px rgba(250,204,21,0.04), inset 0 0 40px rgba(0,0,0,0.4)'
@@ -190,7 +190,7 @@ export default function Landing() {
                 </div>
               }>
                 <div style={{ width:'100%', height:'100%', position:'absolute', inset:0, zIndex:0 }}>
-                  <CompressorScene height="520px" />
+                  <CompressorScene height="460px" />
                 </div>
               </Suspense>
 
