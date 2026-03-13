@@ -20,6 +20,12 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
+    // ✅ ADD: When sending a file, delete Content-Type so the
+    // browser can set the correct multipart/form-data boundary
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"]
+    }
+
     return config
   },
   (error) => Promise.reject(error)
