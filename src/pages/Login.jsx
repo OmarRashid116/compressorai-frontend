@@ -56,7 +56,8 @@ export default function Login() {
             </div>
           </div>
         ), {
-          duration: 6000,
+          duration: Infinity,
+          id: `no-account-${Date.now()}`,
           style: {
             background: '#0d1a2e',
             border: '1px solid rgba(250,204,21,0.2)',
