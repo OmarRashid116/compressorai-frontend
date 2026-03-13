@@ -511,29 +511,34 @@ function CompressorMesh({ hovered }) {
 // ─────────────────────────────────────────────────────────────
 // SCENE
 // ─────────────────────────────────────────────────────────────
-function Scene({ hovered }) {
+// ─────────────────────────────────────────────────────────────
+// SCENE — mobile-aware lighting
+// ─────────────────────────────────────────────────────────────
+function Scene({ hovered, isMobile }) {
   const groupRef = useRef()
   useFrame(({ clock }) => {
-    // Gentle float
     if (groupRef.current)
       groupRef.current.position.y = Math.sin(clock.elapsedTime * 0.45) * 0.06
   })
 
+  // Mobile gets boosted light values
+  const m = isMobile ? 2.2 : 1.0
+
   return (
     <>
-      <ambientLight intensity={1.8} color="#c8e0ff"/>
-      <directionalLight position={[6,10,6]} intensity={4.5} castShadow color="#ffffff"
-        shadow-mapSize={[2048,2048]}
+      <ambientLight intensity={1.8 * m} color="#c8e0ff"/>
+      <directionalLight position={[6,10,6]} intensity={4.5 * m} castShadow color="#ffffff"
+        shadow-mapSize={[isMobile ? 512 : 2048, isMobile ? 512 : 2048]}
         shadow-camera-near={0.5} shadow-camera-far={24}
         shadow-camera-left={-5} shadow-camera-right={5}
         shadow-camera-top={5} shadow-camera-bottom={-5}/>
-      <directionalLight position={[-5,4,-3]} intensity={1.8} color="#4488ff"/>
-      <directionalLight position={[2,-3,4]}  intensity={1.2} color="#00aaff"/>
-      <pointLight position={[0,0.5,5.5]} intensity={6.0} color="#ffffff" distance={14} decay={2}/>
-      <pointLight position={[3,3,4]}    intensity={6.5} color="#00d4ff" distance={12} decay={2}/>
-      <pointLight position={[-4,-2,3]}  intensity={3.0} color="#3b82f6" distance={9}  decay={2}/>
-      <pointLight position={[0,6,0]}    intensity={2.0} color="#aaddff" distance={10} decay={2}/>
-      <spotLight position={[0,8,3]} angle={0.45} intensity={5.0}
+      <directionalLight position={[-5,4,-3]} intensity={1.8 * m} color="#4488ff"/>
+      <directionalLight position={[2,-3,4]}  intensity={1.2 * m} color="#00aaff"/>
+      <pointLight position={[0,0.5,5.5]} intensity={6.0 * m} color="#ffffff" distance={14} decay={2}/>
+      <pointLight position={[3,3,4]}    intensity={6.5 * m} color="#00d4ff" distance={12} decay={2}/>
+      <pointLight position={[-4,-2,3]}  intensity={3.0 * m} color="#3b82f6" distance={9}  decay={2}/>
+      <pointLight position={[0,6,0]}    intensity={2.0 * m} color="#aaddff" distance={10} decay={2}/>
+      <spotLight position={[0,8,3]} angle={0.45} intensity={5.0 * m}
         castShadow penumbra={0.6} color="#ffffff" distance={16}/>
 
       <mesh position={[0,-1.58,0]} rotation={[-Math.PI/2,0,0]} receiveShadow>
@@ -542,29 +547,24 @@ function Scene({ hovered }) {
 
       <group ref={groupRef}>
         <CompressorMesh hovered={hovered}/>
-
-        {/* Holographic orbit rings — 4 rings like reference */}
         <HoloRing radius={1.90} tilt={0}            speed={ 0.50} color="#00d4ff" thickness={0.020}/>
         <HoloRing radius={2.20} tilt={Math.PI/2.8}  speed={-0.35} color="#3b82f6" thickness={0.014}/>
         <HoloRing radius={2.55} tilt={Math.PI/4}    speed={ 0.25} color="#00d4ff" thickness={0.009}/>
         <HoloRing radius={2.90} tilt={Math.PI/1.8}  speed={-0.18} color="#60a5fa" thickness={0.006} opacity={0.60}/>
-
-        {/* Energy orbs on rings */}
         <EnergyOrbGroup radius={1.90} speed={ 1.2} color="#00ffcc" offset={0}          tilt={0}/>
         <EnergyOrbGroup radius={1.90} speed={ 1.2} color="#00d4ff" offset={Math.PI}    tilt={0}/>
         <EnergyOrbGroup radius={2.20} speed={-0.9} color="#3b82f6" offset={Math.PI/3}  tilt={Math.PI/2.8}/>
         <EnergyOrbGroup radius={2.55} speed={ 0.7} color="#00d4ff" offset={Math.PI*0.7} tilt={Math.PI/4}/>
       </group>
 
-      {/* Outer wireframe icosahedron — very faint */}
       <mesh rotation={[0.4,0.6,0.15]}>
         <icosahedronGeometry args={[3.6,1]}/>
         <meshStandardMaterial color="#00d4ff" wireframe transparent opacity={0.030}/>
       </mesh>
 
-      {/* Ambient sparkles */}
-      <Sparkles count={60} scale={7} size={1.8} speed={0.20} color="#00d4ff" opacity={0.45}/>
-      <Sparkles count={30} scale={5} size={2.5} speed={0.14} color="#3b82f6" opacity={0.35}/>
+      {/* Fewer sparkles on mobile for performance */}
+      <Sparkles count={isMobile ? 30 : 60} scale={7} size={1.8} speed={0.20} color="#00d4ff" opacity={0.45}/>
+      <Sparkles count={isMobile ? 15 : 30} scale={5} size={2.5} speed={0.14} color="#3b82f6" opacity={0.35}/>
 
       <ContactShadows position={[0,-1.60,0]} opacity={0.35} scale={9} blur={2.8} far={3.5}/>
 
@@ -582,18 +582,31 @@ function Scene({ hovered }) {
 // ─────────────────────────────────────────────────────────────
 export default function CompressorScene({ height = '100%' }) {
   const [hovered, setHovered] = useState(false)
+  // Detect mobile — window width < 1024px OR touch device
+  const isMobile = typeof window !== 'undefined'
+    && (window.innerWidth < 1024 || 'ontouchstart' in window)
+
+  // Mobile: higher exposure + no shadows for brightness
+  const exposure = isMobile ? 2.8 : 1.65
+
   return (
     <div style={{width:'100%', height}}
       className="cursor-grab active:cursor-grabbing"
       onMouseEnter={()=>setHovered(true)}
       onMouseLeave={()=>setHovered(false)}>
-      <Canvas shadows
+      <Canvas
+        shadows={!isMobile}
         camera={{position:[0.0, 0.0, 10.5], fov:42}}
-        gl={{antialias:true, toneMapping:THREE.ACESFilmicToneMapping,
-             toneMappingExposure:2.20, powerPreference:'high-performance', alpha:true}}
+        gl={{
+          antialias: !isMobile,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: exposure,
+          powerPreference: 'high-performance',
+          alpha: true
+        }}
         style={{width:'100%',height:'100%',background:'transparent'}}>
         <Suspense fallback={null}>
-          <Scene hovered={hovered}/>
+          <Scene hovered={hovered} isMobile={isMobile}/>
         </Suspense>
       </Canvas>
     </div>
