@@ -85,27 +85,31 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ── */}
-      <section ref={heroRef} className="relative h-screen flex items-center overflow-hidden">
+      <section ref={heroRef} className="relative overflow-hidden"
+        style={{ height:'100dvh', minHeight:'600px' }}>
         <div className="absolute inset-0 bg-grid opacity-60" />
         <div className="absolute top-1/4 left-1/6 w-[500px] h-[500px] bg-yellow-400/4 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute bottom-1/4 right-1/6 w-[400px] h-[400px] bg-cyan-400/5 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/3 rounded-full blur-[120px] pointer-events-none" />
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity, pointerEvents: 'auto' }}
-          className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-4 items-center" style={{ paddingTop:"64px" }}>
+        <motion.div style={{ opacity: heroOpacity, pointerEvents: 'auto' }}
+          className="relative z-10 max-w-7xl mx-auto px-6 w-full h-full
+                     grid grid-cols-1 lg:grid-cols-2 gap-6
+                     items-center"
+          style={{ paddingTop:'64px', paddingBottom:'16px' }}>
 
-          {/* Left text */}
+          {/* ── LEFT: Text ── */}
           <motion.div initial={{ opacity:0, x:-50 }} animate={{ opacity:1, x:0 }}
-            transition={{ duration:0.9, ease:[0.22,1,0.36,1] }}>
+            transition={{ duration:0.9, ease:[0.22,1,0.36,1] }}
+            className="flex flex-col justify-center">
 
             <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-2"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 w-fit"
               style={{ border:'1px solid rgba(250,204,21,0.3)', background:'rgba(250,204,21,0.06)' }}>
               <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
               <span className="text-yellow-400 text-xs font-mono tracking-wide">AI-Powered Industrial Solution</span>
             </motion.div>
 
-            <h1 className="font-display font-900 leading-tight mb-2">
+            <h1 className="font-display font-900 leading-tight mb-3">
               <motion.span initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
                 className="block text-white text-4xl lg:text-5xl xl:text-6xl">Industrial</motion.span>
               <motion.span initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.4 }}
@@ -115,7 +119,7 @@ export default function Landing() {
             </h1>
 
             <motion.p initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.6 }}
-              className="text-slate-400 text-sm leading-snug mb-3 max-w-xl">
+              className="text-slate-400 text-sm leading-relaxed mb-4 max-w-lg">
               Upload your compressor dataset and let our AI pipeline —
               <span className="text-cyan-400"> DBSCAN clustering</span>,
               <span className="text-yellow-400"> Gradient Boosting</span>, and
@@ -124,22 +128,21 @@ export default function Landing() {
             </motion.p>
 
             <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.7 }}
-              className="flex flex-wrap gap-3 mb-3 relative" style={{ zIndex: 10 }}>
+              className="flex flex-wrap gap-3 mb-4" style={{ zIndex:10 }}>
               <motion.button whileHover={{ scale:1.03, y:-2 }} whileTap={{ scale:0.97 }}
                 onClick={handleStart}
-                className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5">
-                Start Optimizing <ChevronRight size={18} />
+                className="btn-primary flex items-center gap-2 text-sm px-6 py-3">
+                Start Optimizing <ChevronRight size={16} />
               </motion.button>
               <motion.button whileHover={{ scale:1.03, y:-2 }} whileTap={{ scale:0.97 }}
                 onClick={() => navigate('/tutorial')}
-                className="btn-ghost-yellow flex items-center gap-2 text-sm px-5 py-2.5">
-                Watch Tutorial <ArrowRight size={16} />
+                className="btn-ghost-yellow flex items-center gap-2 text-sm px-6 py-3">
+                Watch Tutorial <ArrowRight size={14} />
               </motion.button>
             </motion.div>
 
-            {/* Stats */}
             <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.9 }}
-              className="grid grid-cols-4 gap-2 pt-2 border-t border-white/5">
+              className="grid grid-cols-4 gap-3 pt-3 border-t border-white/5">
               {[
                 { end:99.2, suffix:'%',    label:'Model Accuracy' },
                 { end:20,   suffix:'%+',   label:'Energy Saving'  },
@@ -147,7 +150,7 @@ export default function Landing() {
                 { end:'∞',  suffix:'',     label:'Compressors',  isText:true },
               ].map(({ end, suffix, label, isText }) => (
                 <div key={label} className="text-center">
-                  <div className="font-display font-900 text-xl text-yellow-400 neon-yellow">
+                  <div className="font-display font-900 text-lg text-yellow-400 neon-yellow">
                     {isText ? `${end}${suffix}` : <AnimatedCounter end={end} suffix={suffix} />}
                   </div>
                   <div className="text-[10px] text-slate-500 font-mono mt-0.5">{label}</div>
@@ -156,45 +159,33 @@ export default function Landing() {
             </motion.div>
           </motion.div>
 
-          {/* Right: 3D Model — BIG SQUARE */}
+          {/* ── RIGHT: 3D Model — perfectly centered ── */}
           <motion.div
             initial={{ opacity:0, scale:0.85, x:40 }}
             animate={{ opacity:1, scale:1, x:0 }}
             transition={{ duration:1.2, ease:[0.22,1,0.36,1], delay:0.2 }}
-            className="relative flex items-center justify-center"
-          >
-            {/* Outer glow rings */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
-              <div className="absolute inset-0 rounded-2xl"
-                style={{background:'radial-gradient(ellipse at center, rgba(0,212,255,0.07) 0%, transparent 70%)'}} />
-              <div className="absolute inset-0 rounded-2xl animate-pulse"
-                style={{background:'radial-gradient(ellipse at 40% 60%, rgba(250,204,21,0.05) 0%, transparent 60%)', animationDuration:'3s'}} />
-            </div>
+            className="hidden lg:flex items-center justify-center h-full py-4">
 
-            {/* 3D Canvas Container — contained square */}
-            <div className="relative w-full rounded-2xl overflow-hidden"
+            <div className="relative rounded-2xl overflow-hidden"
               style={{
+                width: 'min(100%, calc(100dvh - 160px))',
                 aspectRatio: '1 / 1',
-                height: 'calc(100vh - 140px)',
-                maxHeight: '500px',
                 background: 'radial-gradient(ellipse at center, rgba(8,20,40,0.6) 0%, rgba(4,10,20,0.95) 100%)',
                 border: '1px solid rgba(0,212,255,0.1)',
-                boxShadow: '0 0 60px rgba(0,212,255,0.06), 0 0 120px rgba(250,204,21,0.04), inset 0 0 40px rgba(0,0,0,0.4)'
+                boxShadow: '0 0 60px rgba(0,212,255,0.06), inset 0 0 40px rgba(0,0,0,0.4)'
               }}>
               <Suspense fallback={
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
-                    <div className="spinner w-14 h-14 mx-auto mb-4" />
-                    <p className="text-slate-400 text-sm font-mono tracking-widest">LOADING 3D MODEL...</p>
+                    <div className="spinner w-10 h-10 mx-auto mb-3" />
+                    <p className="text-slate-400 text-xs font-mono">LOADING 3D MODEL...</p>
                   </div>
                 </div>
               }>
-                <div style={{ width:'100%', height:'100%', position:'absolute', inset:0, zIndex:0 }}>
+                <div style={{ width:'100%', height:'100%', position:'absolute', inset:0 }}>
                   <CompressorScene height="100%" />
                 </div>
               </Suspense>
-
-              {/* Corner decorations */}
               <div className="absolute top-3 left-3 w-5 h-5 pointer-events-none"
                 style={{borderTop:'1px solid rgba(250,204,21,0.4)', borderLeft:'1px solid rgba(250,204,21,0.4)'}} />
               <div className="absolute top-3 right-3 w-5 h-5 pointer-events-none"
@@ -203,16 +194,28 @@ export default function Landing() {
                 style={{borderBottom:'1px solid rgba(250,204,21,0.4)', borderLeft:'1px solid rgba(250,204,21,0.4)'}} />
               <div className="absolute bottom-3 right-3 w-5 h-5 pointer-events-none"
                 style={{borderBottom:'1px solid rgba(250,204,21,0.4)', borderRight:'1px solid rgba(250,204,21,0.4)'}} />
-
-
             </div>
+          </motion.div>
+
+          {/* ── MOBILE: Model shown below text ── */}
+          <motion.div
+            initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:0.5 }}
+            className="lg:hidden w-full rounded-2xl overflow-hidden"
+            style={{
+              height: '40vh',
+              background: 'radial-gradient(ellipse at center, rgba(8,20,40,0.6) 0%, rgba(4,10,20,0.95) 100%)',
+              border: '1px solid rgba(0,212,255,0.1)',
+            }}>
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="spinner w-8 h-8"/></div>}>
+              <CompressorScene height="100%" />
+            </Suspense>
           </motion.div>
 
         </motion.div>
 
         {/* Scroll indicator */}
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:2 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
           <span className="text-xs text-slate-600 font-mono">Scroll to explore</span>
           <motion.div animate={{ y:[0,6,0] }} transition={{ repeat:Infinity, duration:1.5 }}
             className="w-4 h-4 border-b-2 border-r-2 border-slate-600 rotate-45" />
