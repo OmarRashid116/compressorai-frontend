@@ -18,22 +18,22 @@ export default function Reports() {
   useEffect(() => {
     const load = async () => {
       try {
-        // v5: fetch engineer's linked units, then history per unit
         const unitRes = await api.get('/compressors/units/my')
         const us = Array.isArray(unitRes.data)
           ? unitRes.data
           : (unitRes.data?.items || unitRes.data?.units || [])
         setUnits(us)
-        // Expand first unit by default
         if (us.length) setExpanded({ [us[0].id]: true })
-        // Load history for all units in parallel
+
         const hist = {}
         await Promise.all(us.map(async u => {
           try {
             const r = await api.get(`/analysis/history/${u.id}?limit=20`)
+            // ✅ FIX: backend returns { data: [...], limit, offset, count }
+            // Previous code missed r.data?.data — checking all possible shapes
             hist[u.id] = Array.isArray(r.data)
               ? r.data
-              : (r.data?.items || r.data?.results || r.data?.analyses || [])
+              : (r.data?.data || r.data?.items || r.data?.results || r.data?.analyses || [])
           } catch { hist[u.id] = [] }
         }))
         setAnalyses(hist)
@@ -45,13 +45,13 @@ export default function Reports() {
 
   const downloadReport = async (type, unit, result) => {
     try {
-      // Fetch full analysis result from backend if we don't have analysis_results object
       let analysisData = result
+      // ✅ Fetch full result if scores are missing (history endpoint returns summary only)
       if (!result.scores && result.id) {
         try {
           const r = await api.get(`/analysis/result/${result.id}`)
           analysisData = r.data
-        } catch { /* use what we have */ }
+        } catch { /* use summary */ }
       }
 
       const payload = {
@@ -136,7 +136,7 @@ export default function Reports() {
               <motion.div key={unit.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*0.05}}
                 className="card" style={{border:'1px solid rgba(255,255,255,0.07)'}}>
 
-                {/* Unit header — click to expand */}
+                {/* Unit header */}
                 <div className="flex items-center justify-between cursor-pointer"
                   onClick={() => setExpanded(p => ({...p, [unit.id]: !p[unit.id]}))}>
                   <h2 className="font-display font-700 text-white text-lg flex items-center gap-3">
@@ -163,7 +163,6 @@ export default function Reports() {
                   </div>
                 </div>
 
-                {/* Analysis history list */}
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}} exit={{height:0,opacity:0}}
@@ -184,14 +183,13 @@ export default function Reports() {
                                   <div className="flex items-center gap-2">
                                     <Database size={13} className="text-slate-500"/>
                                     <span className="text-sm text-slate-200 font-display font-500 truncate max-w-[220px]">
-                                      {a.dataset?.original_filename || a.filename || 'Dataset'}
+                                      {a.dataset?.original_filename || a.filename || `Analysis ${a.id?.slice(0,8)}`}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 font-mono">
                                     <span className="flex items-center gap-1">
                                       <Calendar size={10}/>{a.created_at?.substring(0,10)}
                                     </span>
-                                    {a.dataset?.clean_rows && <span>{a.dataset.clean_rows} rows</span>}
                                     {a.power_saving_percent != null && (
                                       <span className="text-green-400 flex items-center gap-0.5">
                                         <TrendingDown size={10}/>-{a.power_saving_percent?.toFixed(1)}% energy
@@ -202,15 +200,12 @@ export default function Reports() {
                                         <Zap size={10}/>{a.best_electrical_power?.toFixed(1)} kW
                                       </span>
                                     )}
+                                    {a.scores?.r2 != null && (
+                                      <span className="text-blue-400 font-mono">R²: {a.scores.r2.toFixed(0)}%</span>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  {a.scores && (
-                                    <span className="text-xs font-mono text-cyan-400">
-                                      R²: {(a.scores.r2 || 0).toFixed(0)}%
-                                    </span>
-                                  )}
-                                  {/* Re-run with same dataset */}
                                   {a.dataset_id && (
                                     <button
                                       onClick={() => navigate(`/analysis/${unit.id}/${a.dataset_id}`)}
