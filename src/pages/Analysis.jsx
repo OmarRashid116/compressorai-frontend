@@ -98,16 +98,15 @@ function DatasetPicker({ unitId, onSelect, onClose }) {
             <button key={ds.id} onClick={() => onSelect(ds)}
               className="w-full text-left rounded-xl p-3.5 border border-white/6 hover:bg-white/4 hover:border-cyan-400/20 transition-all group">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0">
                   <div className="font-display font-600 text-white text-sm truncate">{ds.original_filename}</div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-500 font-mono">
-                    <span>{ds.clean_rows} rows</span>
+                  <div className="text-xs text-slate-500 font-mono mt-1 flex items-center gap-2">
+                    <span>{ds.clean_rows} clean rows</span>
                     <span>·</span>
-                    <span><Clock size={9} className="inline mr-0.5"/>{new Date(ds.created_at).toLocaleDateString()}</span>
-                    {ds.contributed_to_model && <span className="text-green-400">· In ML model</span>}
+                    <span>{ds.created_at?.substring(0,10)}</span>
                   </div>
                 </div>
-                <ChevronRight size={14} className="text-slate-600 group-hover:text-cyan-400 transition-colors flex-shrink-0 mt-0.5" />
+                <CheckCircle size={14} className="text-green-400 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity"/>
               </div>
             </button>
           ))}
@@ -184,12 +183,14 @@ export default function Analysis() {
     } finally { setLoading(false) }
   }
 
-  /* Run analysis */
+  /* ✅ FIX: Run analysis — backend expects params as JSON string in FormData */
   const runAnalysis = async () => {
     if (!dataset?.id) return
     setStep('running'); setLoading(true)
     try {
-      const res = await api.post(`/analysis/run/${dataset.id}`, { params })
+      const fd = new FormData()
+      fd.append('params', JSON.stringify(params))
+      const res = await api.post(`/analysis/run/${dataset.id}`, fd)
       setResults(res.data); setStep('results')
       toast.success('Analysis complete! 🎯')
     } catch (err) {
@@ -203,7 +204,7 @@ export default function Analysis() {
     setDataset(ds); setShowPicker(false); setStep('params')
   }
 
-  /* ✅ FIX: Download report — correct payload structure matching backend reports.py */
+  /* Download report */
   const downloadReport = async (type) => {
     if (!results) return
     try {
@@ -249,7 +250,7 @@ export default function Analysis() {
     } catch { toast.error('Download failed') }
   }
 
-  /* ✅ NEW: Copy optimal parameters to clipboard */
+  /* Copy optimal parameters to clipboard */
   const copyParameters = () => {
     if (!results?.optimal_parameters) return
     const lines = Object.entries(results.optimal_parameters)
@@ -611,7 +612,8 @@ export default function Analysis() {
                 <ScoreGauge score={results.scores?.silhouette || 0} label="DBSCAN Silhouette" color={CYAN} />
                 <ScoreGauge score={results.scores?.r2          || 0} label="R² Score (GBR)"   color={BLUE} />
                 <ScoreGauge score={results.scores?.f1          || 0} label="F1 Score"         color={GREEN} />
-                <ScoreGauge score={results.scores?.convergence || 0} label="GA Convergence"   color={ORANGE} />
+                {/* ✅ FIX: engine returns 'convergence' key, handle both */}
+                <ScoreGauge score={results.scores?.ga_convergence || results.scores?.convergence || 0} label="GA Convergence" color={ORANGE} />
               </div>
             </div>
 
@@ -656,15 +658,16 @@ export default function Analysis() {
                 <h3 className="font-display font-700 text-white mb-4">Model Training Convergence</h3>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={results.training_curve.train?.map((v, i) => ({
-                    iter:i+1, train:v, test:results.training_curve.test?.[i]
+                    iter:i+1, train:v, test:results.training_curve.test?.[i], val:results.training_curve.val?.[i]
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" />
                     <XAxis dataKey="iter" stroke="#64748b" tick={{fontSize:10}} />
                     <YAxis stroke="#64748b" tick={{fontSize:10}} />
                     <Tooltip content={<CustomTooltip/>} />
                     <Legend wrapperStyle={{fontSize:12,color:'#94a3b8'}} />
-                    <Line type="monotone" dataKey="train" stroke={BLUE} strokeWidth={2} dot={false} name="Train MAE" />
-                    <Line type="monotone" dataKey="test"  stroke={CYAN} strokeWidth={2} dot={false} name="Test MAE"  />
+                    <Line type="monotone" dataKey="train" stroke={BLUE}   strokeWidth={2} dot={false} name="Train MAE" />
+                    <Line type="monotone" dataKey="val"   stroke={ORANGE} strokeWidth={2} dot={false} name="Val MAE"   />
+                    <Line type="monotone" dataKey="test"  stroke={CYAN}   strokeWidth={2} dot={false} name="Test MAE"  />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -754,7 +757,7 @@ export default function Analysis() {
               </div>
             </div>
 
-            {/* ✅ IMPROVED: Optimal Parameters with Copy button */}
+            {/* Optimal Parameters */}
             <div className="card">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-display font-700 text-white text-xl">🎯 Optimal Operating Parameters</h3>
