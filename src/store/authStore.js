@@ -12,37 +12,32 @@ const useAuthStore = create((set, get) => ({
   token:           localStorage.getItem('auth_token') || null,
   isLoading:       !!localStorage.getItem('auth_token'),
   isAuthenticated: !!localStorage.getItem('auth_token'),
-  // ✅ FIX: plain boolean state (not a function) so destructuring gives true/false
-  isDefaultAdmin:  !!load('auth_user')?.is_default_admin,
 
   // Called on login
   login: (user, token) => {
     localStorage.setItem('auth_token', token)
     save('auth_user', user)
-    set({ user, token, isAuthenticated: true, isLoading: false,
-          isDefaultAdmin: !!user?.is_default_admin })  // ✅ update on login
+    set({ user, token, isAuthenticated: true, isLoading: false })
   },
 
   // Called on logout
   logout: () => {
     localStorage.removeItem('auth_token')
     clear('auth_user')
-    set({ user: null, token: null, isAuthenticated: false, isLoading: false,
-          isDefaultAdmin: false })
+    set({ user: null, token: null, isAuthenticated: false, isLoading: false })
   },
 
   // Update user in store AND localStorage
   setUser: (user) => {
     save('auth_user', user)
-    set({ user, isDefaultAdmin: !!user?.is_default_admin })  // ✅ update on setUser
+    set({ user })
   },
 
   // Called on app load/refresh to re-validate token with backend
   fetchMe: async () => {
     const token = localStorage.getItem('auth_token')
     if (!token) {
-      set({ user: null, token: null, isAuthenticated: false, isLoading: false,
-            isDefaultAdmin: false })
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false })
       return
     }
     try {
@@ -50,14 +45,11 @@ const useAuthStore = create((set, get) => ({
       const res  = await api.get('/auth/me')
       const user = res.data
       save('auth_user', user)
-      set({ user, isAuthenticated: true, isLoading: false,
-            isDefaultAdmin: !!user?.is_default_admin })  // ✅ update on fetchMe
+      set({ user, isAuthenticated: true, isLoading: false })
     } catch {
-      // Token invalid/expired — log out silently
       localStorage.removeItem('auth_token')
       clear('auth_user')
-      set({ user: null, token: null, isAuthenticated: false, isLoading: false,
-            isDefaultAdmin: false })
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false })
     }
   },
 
@@ -65,6 +57,12 @@ const useAuthStore = create((set, get) => ({
     const user = get().user
     if (!user) return false
     return roles.includes(user.role)
+  },
+
+  // ✅ ORIGINAL — kept as function (do not change)
+  isDefaultAdmin: () => {
+    const user = get().user
+    return !!user?.is_default_admin
   },
 }))
 
