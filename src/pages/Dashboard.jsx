@@ -137,15 +137,29 @@ function UnitCard({ unit, onUnlink, i }) {
 function AdminTypeCard({ type, i }) {
   const navigate = useNavigate()
 
-  const handleOptimize = async () => {
+  // Navigate to the first unit of THIS specific type only
+  const handleOptimize = async (e) => {
+    e.stopPropagation()
     try {
-      const res = await api.get('/compressors/units/my')
-      const units = Array.isArray(res.data) ? res.data : (res.data?.results ?? [])
-      const match = units.find(u => u.type_id === type.id && u.is_active !== false)
-                 || units.find(u => u.is_active !== false)
-      if (match) navigate(`/analysis/${match.id}`)
-      else toast('No units linked yet.', { icon: '⚠️', style: { background:'#0d1a2e', color:'#e2e8f0' } })
-    } catch { toast.error('Could not load units.') }
+      // Get units filtered by this compressor type
+      const res = await api.get(`/compressors/units?type_id=${type.id}`)
+      const typeUnits = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.results ?? res.data?.units ?? [])
+
+      const match = typeUnits.find(u => u.is_active !== false) || typeUnits[0]
+      if (match) {
+        localStorage.setItem('last_unit_id', match.id)
+        navigate(`/analysis/${match.id}`)
+      } else {
+        // No units for this type — navigate to dashboard to add one
+        toast('No units found for this compressor type. Add a unit first.', {
+          icon: '⚠️', style: { background:'#0d1a2e', color:'#e2e8f0' }
+        })
+      }
+    } catch {
+      toast.error('Could not load units.')
+    }
   }
 
   return (
@@ -198,14 +212,14 @@ function AdminTypeCard({ type, i }) {
           onMouseLeave={e => e.currentTarget.style.background='rgba(0,212,255,0.08)'}>
           <Settings size={13}/> Manage
         </button>
-        <button onClick={e => { e.stopPropagation(); handleOptimize() }}
+        <button onClick={handleOptimize}
           className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-display font-600 text-sm transition-all"
           style={{ background:'rgba(250,204,21,0.08)', border:'1px solid rgba(250,204,21,0.2)', color:'#facc15' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(250,204,21,0.15)'}
           onMouseLeave={e => e.currentTarget.style.background='rgba(250,204,21,0.08)'}>
           <BarChart3 size={13}/> Optimize
         </button>
-        <button title="Coming Soon"
+        <button onClick={e => e.stopPropagation()} title="Coming Soon"
           className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-display font-600 text-sm relative"
           style={{ background:'rgba(148,163,184,0.05)', border:'1px solid rgba(148,163,184,0.12)', color:'#64748b', cursor:'not-allowed' }}>
           <Wrench size={13}/> Maintain
@@ -378,7 +392,7 @@ function AddCompressorModal({ onClose, onAdd }) {
                       <div>
                         <label className="label">Rated Power (kW)</label>
                         <div className="relative">
-                          <input type="number" className="input-field pr-8" placeholder="250"
+                          <input type="number" className="input-field pr-8" placeholder="e.g. 250"
                             value={newType.rated_power_kw} onChange={e => setNewType({...newType, rated_power_kw:e.target.value})}
                             style={{MozAppearance:'textfield'}} />
                           <div className="absolute right-0 top-0 bottom-0 flex flex-col border-l" style={{borderColor:'rgba(250,204,21,0.2)'}}>
@@ -395,7 +409,7 @@ function AddCompressorModal({ onClose, onAdd }) {
                     <div>
                       <label className="label">Rated Pressure (bar)</label>
                       <div className="relative">
-                        <input type="number" className="input-field pr-8" placeholder="10"
+                        <input type="number" className="input-field pr-8" placeholder="e.g. 10"
                           value={newType.rated_pressure_bar} onChange={e => setNewType({...newType, rated_pressure_bar:e.target.value})}
                           style={{MozAppearance:'textfield'}} />
                         <div className="absolute right-0 top-0 bottom-0 flex flex-col border-l" style={{borderColor:'rgba(250,204,21,0.2)'}}>
@@ -540,10 +554,10 @@ export default function Dashboard() {
       {/* Admin KPIs */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard label="Compressor Types"  value={stats.total_compressors}                       icon={Layers}      color="yellow" delay={0}   />
-          <KPICard label="Total Analyses"    value={stats.total_analyses}                           icon={Activity}    color="cyan"   delay={0.1} />
-          <KPICard label="Avg Energy Saving" value={stats.avg_power_saving_percent?.toFixed(1)} unit="%" icon={TrendingDown} color="green" delay={0.2} />
-          <KPICard label="Active Engineers"  value={stats.active_users}                             icon={Users}       color="white"  delay={0.3} />
+          <KPICard label="Compressor Types"  value={stats.total_compressor_units ?? stats.total_compressors} icon={Layers}       color="yellow" delay={0}   />
+          <KPICard label="Total Analyses"    value={stats.total_analyses}                                       icon={Activity}     color="cyan"   delay={0.1} />
+          <KPICard label="Avg Energy Saving" value={stats.avg_power_saving_percent?.toFixed(1)} unit="%"        icon={TrendingDown} color="green"  delay={0.2} />
+          <KPICard label="Active Engineers"  value={stats.total_engineers ?? stats.active_users}                icon={Users}        color="white"  delay={0.3} />
         </div>
       )}
 
