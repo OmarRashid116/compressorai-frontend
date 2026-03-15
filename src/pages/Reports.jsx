@@ -33,7 +33,7 @@ export default function Reports() {
             const r = await api.get(`/analysis/history/${u.id}?limit=20`)
             hist[u.id] = Array.isArray(r.data)
               ? r.data
-              : (r.data?.items || r.data?.results || r.data?.analyses || [])
+              : (r.data?.data || r.data?.items || r.data?.results || r.data?.analyses || [])
           } catch { hist[u.id] = [] }
         }))
         setAnalyses(hist)
