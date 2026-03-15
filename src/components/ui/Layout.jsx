@@ -208,18 +208,44 @@ function NavItem({ to, icon: Icon, label, collapsed, extraStyle, onClick }) {
 
 // ── Analysis Button ───────────────────────────────────────────
 function AnalysisNavButton({ collapsed, onClick }) {
-  const navigate  = useNavigate()
-  const location  = useLocation()
-  const isActive  = location.pathname.startsWith('/analysis')
+  const navigate        = useNavigate()
+  const location        = useLocation()
+  const [busy, setBusy] = useState(false)
+  const isActive        = location.pathname.startsWith('/analysis')
+
+  const handleClick = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const res   = await api.get('/compressors/units/my')
+      const units = res.data || []
+      if (units.length > 0) {
+        navigate(`/analysis/${units[0].id}`)
+      } else {
+        toast.error('No compressor units linked yet. Add one from the Dashboard first.')
+        navigate('/dashboard')
+      }
+    } catch {
+      navigate('/dashboard')
+    } finally {
+      setBusy(false)
+      onClick?.()
+    }
+  }
+
   return (
     <motion.button whileHover={{ x: collapsed ? 0 : 3 }}
-      onClick={() => { navigate('/dashboard'); onClick?.() }}
+      onClick={handleClick}
+      disabled={busy}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-0.5 ${
         isActive
           ? 'text-yellow-400 bg-yellow-400/10 border border-yellow-400/20'
           : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
       }`}>
-      <BarChart3 size={18} className="flex-shrink-0" />
+      {busy
+        ? <div className="w-[18px] h-[18px] border border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+        : <BarChart3 size={18} className="flex-shrink-0" />
+      }
       <AnimatePresence>
         {!collapsed && (
           <motion.span initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
