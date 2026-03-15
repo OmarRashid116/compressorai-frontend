@@ -33,7 +33,7 @@ export default function Reports() {
             const r = await api.get(`/analysis/history/${u.id}?limit=20`)
             hist[u.id] = Array.isArray(r.data)
               ? r.data
-              : (r.data?.data || r.data?.items || r.data?.results || r.data?.analyses || [])
+              : (r.data?.items || r.data?.results || r.data?.analyses || [])
           } catch { hist[u.id] = [] }
         }))
         setAnalyses(hist)
@@ -72,6 +72,10 @@ export default function Reports() {
           histogram_data:            analysisData.histogram_data            || [],
           training_curve:            analysisData.training_curve            || [],
           cluster_stats:             analysisData.cluster_stats             || {},
+          kw_saved:            analysisData.kw_saved            || 0,
+          energy_saved_kwh:    analysisData.energy_saved_kwh    || 0,
+          cost_saved_annual:   analysisData.cost_saved_annual   || 0,
+          cost_saved_monthly:  analysisData.cost_saved_monthly  || 0,
         },
         user_params:    analysisData.user_params || {},
         include_graphs: true,
