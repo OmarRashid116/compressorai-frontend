@@ -677,29 +677,50 @@ export default function Analysis() {
               ))}
             </div>
 
-            {/* Cost Savings Card */}
-            {results.cost_per_kwh > 0 && results.energy_saved_kwh > 0 && (
+            {/* Energy & Cost Savings Card — always shown when saving > 0 */}
+            {(results.kw_saved > 0 || results.power_saving_percent > 0) && (
               <div className="card" style={{background:'linear-gradient(135deg,rgba(21,128,61,0.1),rgba(0,212,255,0.05))',border:'1px solid rgba(21,128,61,0.25)'}}>
-                <h3 className="font-display font-700 text-white text-lg mb-4">💰 Cost Savings Estimate</h3>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                  <h3 className="font-display font-700 text-white text-lg">⚡ Energy & Cost Savings</h3>
+                  {!results.cost_per_kwh && (
+                    <span className="text-xs text-yellow-400/70 font-mono bg-yellow-400/10 px-2 py-1 rounded-lg">
+                      Enter tariff in Parameters to see cost savings
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {[
-                    { label:'kW Saved',           value: results.kw_saved?.toFixed(2),          unit:'kW',       color:'text-cyan-400' },
-                    { label:'Energy Saved / Year', value: results.energy_saved_kwh?.toLocaleString(), unit:'kWh',  color:'text-blue-400' },
-                    { label:'Cost Saved / Month',  value: results.cost_saved_monthly?.toLocaleString(undefined,{maximumFractionDigits:0}), unit:'/month', color:'text-green-400' },
-                    { label:'Cost Saved / Year',   value: results.cost_saved_annual?.toLocaleString(undefined,{maximumFractionDigits:0}),  unit:'/year',  color:'text-green-400' },
-                  ].map(({label,value,unit,color}) => (
-                    <div key={label} className="bg-black/20 rounded-xl p-4 text-center">
-                      <div className="text-slate-400 text-xs font-mono mb-1">{label}</div>
-                      <div className={`font-display font-800 text-2xl ${color}`}>{value}</div>
-                      <div className="text-slate-500 text-xs mt-0.5">{unit}</div>
-                    </div>
-                  ))}
+                  {/* Always show: kW saved + energy units */}
+                  <div className="bg-black/20 rounded-xl p-4 text-center">
+                    <div className="text-slate-400 text-xs font-mono mb-1">kW Saved</div>
+                    <div className="font-display font-800 text-2xl text-cyan-400">{results.kw_saved?.toFixed(4)}</div>
+                    <div className="text-slate-500 text-xs mt-0.5">kW / hour</div>
+                  </div>
+                  <div className="bg-black/20 rounded-xl p-4 text-center">
+                    <div className="text-slate-400 text-xs font-mono mb-1">Energy Saved / Year</div>
+                    <div className="font-display font-800 text-2xl text-blue-400">{results.energy_saved_kwh?.toLocaleString(undefined,{maximumFractionDigits:1})}</div>
+                    <div className="text-slate-500 text-xs mt-0.5">kWh</div>
+                  </div>
+                  {/* Cost cards: show value if tariff set, else show hint */}
+                  <div className="bg-black/20 rounded-xl p-4 text-center">
+                    <div className="text-slate-400 text-xs font-mono mb-1">Cost Saved / Month</div>
+                    {results.cost_per_kwh > 0
+                      ? <div className="font-display font-800 text-2xl text-green-400">{results.cost_saved_monthly?.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+                      : <div className="font-display font-800 text-xl text-slate-600">—</div>}
+                    <div className="text-slate-500 text-xs mt-0.5">{results.cost_per_kwh > 0 ? `/ month` : 'set tariff'}</div>
+                  </div>
+                  <div className="bg-black/20 rounded-xl p-4 text-center">
+                    <div className="text-slate-400 text-xs font-mono mb-1">Cost Saved / Year</div>
+                    {results.cost_per_kwh > 0
+                      ? <div className="font-display font-800 text-2xl text-green-400">{results.cost_saved_annual?.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+                      : <div className="font-display font-800 text-xl text-slate-600">—</div>}
+                    <div className="text-slate-500 text-xs mt-0.5">{results.cost_per_kwh > 0 ? `/ year` : 'set tariff'}</div>
+                  </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/8 text-xs text-slate-500 font-mono flex flex-wrap gap-3">
-                  <span>Tariff: {results.cost_per_kwh}/kWh</span>
-                  <span>· {results.hours_per_day}h/day</span>
-                  <span>· {results.operating_days} days/yr</span>
-                  <span>· Baseline: {results.baseline_electrical_power} kW → Optimal: {results.best_electrical_power} kW</span>
+                  <span>Baseline: {results.baseline_electrical_power} kW</span>
+                  <span>→ Optimal: {results.best_electrical_power} kW</span>
+                  <span>· {results.hours_per_day || 24}h/day · {results.operating_days || 365} days/yr</span>
+                  {results.cost_per_kwh > 0 && <span>· Tariff: {results.cost_per_kwh}/kWh</span>}
                 </div>
               </div>
             )}
