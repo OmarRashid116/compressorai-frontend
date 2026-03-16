@@ -30,11 +30,24 @@ export default function Reports() {
         const hist = {}
         await Promise.all(us.map(async u => {
           try {
-            const r = await api.get(`/analysis/history/${u.id}?limit=20`)
-            hist[u.id] = Array.isArray(r.data)
-              ? r.data
-              : (r.data?.data || r.data?.items || r.data?.results || r.data?.analyses || [])
-          } catch { hist[u.id] = [] }
+            const r = await api.get(`/analysis/history/${u.id}?limit=50`)
+            // Debug: log raw response to browser console
+            console.log(`[Reports] history for ${u.unit_id}:`, r.data)
+            // Handle every possible response shape
+            let records = []
+            if (Array.isArray(r.data)) {
+              records = r.data
+            } else if (r.data && typeof r.data === 'object') {
+              records = r.data.data || r.data.items || r.data.results ||
+                        r.data.analyses || r.data.history || r.data.records ||
+                        r.data.analysis || []
+            }
+            hist[u.id] = Array.isArray(records) ? records : []
+            console.log(`[Reports] parsed ${hist[u.id].length} records for ${u.unit_id}`)
+          } catch (err) {
+            console.error(`[Reports] failed for ${u.unit_id}:`, err?.response?.status, err?.response?.data)
+            hist[u.id] = []
+          }
         }))
         setAnalyses(hist)
       } catch { toast.error('Failed to load') }
