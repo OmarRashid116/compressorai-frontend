@@ -24,6 +24,7 @@ export default defineConfig({
       'recharts',
       'zustand',
     ],
+    force: true,
   },
 
   build: {
@@ -57,6 +58,6 @@ export default defineConfig({
   },
 
   esbuild: {
-    keepNames: true,   // ← THE actual fix: stops minifier renaming functions to 'r'
+    keepNames: true,
   },
 })
