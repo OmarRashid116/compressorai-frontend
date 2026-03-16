@@ -1,13 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, BarChart3, FileText, BookOpen, Settings,
+  LayoutDashboard, BarChart3, BookOpen, Settings,
   LogOut, Zap, ChevronRight, Shield,
-  Wrench, FlaskConical, Clock, X, Sparkles, Search, Menu
+  Wrench, Clock, X, Menu
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
-import api from '../../utils/api'
 import toast from 'react-hot-toast'
 
 const roleColors = {
@@ -103,81 +102,6 @@ function ComingSoonModal({ pageKey, onClose }) {
   )
 }
 
-// ── Smart Search ──────────────────────────────────────────────
-function SmartSearch({ onClose }) {
-  const navigate    = useNavigate()
-  const [query, setQuery]     = useState('')
-  const [results, setResults] = useState([])
-  const [open, setOpen]       = useState(false)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  useEffect(() => {
-    if (!query.trim()) { setResults([]); return }
-    const t = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const res = await api.get('/compressors/units/my')
-        const all = res.data || []
-        const filtered = all.filter(u =>
-          u.unit_id?.toLowerCase().includes(query.toLowerCase()) ||
-          u.location?.toLowerCase().includes(query.toLowerCase()) ||
-          u.type?.name?.toLowerCase().includes(query.toLowerCase())
-        )
-        setResults(filtered.slice(0, 5))
-        setOpen(true)
-      } catch { setResults([]) }
-      finally { setLoading(false) }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [query])
-
-  const go = (id) => {
-    navigate(`/analysis/${id}`)
-    setQuery(''); setOpen(false)
-    onClose?.()
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl"
-        style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', minWidth: '160px' }}>
-        <Search size={13} className="text-slate-500 flex-shrink-0"/>
-        <input
-          value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Search units…"
-          className="bg-transparent text-slate-300 text-xs placeholder-slate-600 focus:outline-none w-full"
-        />
-        {loading && <div className="w-3 h-3 border border-slate-500 border-t-transparent rounded-full animate-spin flex-shrink-0"/>}
-      </div>
-      <AnimatePresence>
-        {open && results.length > 0 && (
-          <motion.div initial={{ opacity:0, y:6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:6 }}
-            className="absolute right-0 top-full mt-2 w-64 rounded-xl overflow-hidden z-50"
-            style={{ background:'rgba(8,14,26,0.98)', border:'1px solid rgba(0,212,255,0.15)', boxShadow:'0 16px 48px rgba(0,0,0,0.5)' }}>
-            {results.map(u => (
-              <button key={u.id} onClick={() => go(u.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left">
-                <Zap size={13} className="text-yellow-400 flex-shrink-0"/>
-                <div className="min-w-0">
-                  <div className="text-white text-xs font-display font-600 truncate">{u.unit_id}</div>
-                  <div className="text-slate-500 text-[10px] font-mono truncate">{u.location || 'No location'}</div>
-                </div>
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
 // ── Nav Item ──────────────────────────────────────────────────
 function NavItem({ to, icon: Icon, label, collapsed, extraStyle, onClick }) {
   return (
@@ -214,13 +138,10 @@ function AnalysisNavButton({ collapsed, onClick }) {
 
   const handleClick = () => {
     onClick?.()
-    // Use unit ID from current URL first (most reliable)
     const urlMatch = location.pathname.match(/\/analysis\/([^/]+)/)
     const unitFromUrl = urlMatch ? urlMatch[1] : null
-    // Fallback to last saved unit in localStorage
     const savedUnit = localStorage.getItem('last_unit_id')
     const target = unitFromUrl || savedUnit
-
     if (target) {
       navigate(`/analysis/${target}`)
     } else {
@@ -258,9 +179,6 @@ function NavList({ collapsed = false, onItemClick, hasAdmin, onComingSoon }) {
       <div className="mb-0.5">
         <AnalysisNavButton collapsed={collapsed} onClick={onItemClick} />
       </div>
-      {!hasAdmin && (
-        <NavItem to="/reports" icon={FileText} label="Reports" collapsed={collapsed} onClick={onItemClick} />
-      )}
       <NavItem to="/tutorial" icon={BookOpen}  label="Tutorial" collapsed={collapsed} onClick={onItemClick} />
       <NavItem to="/settings" icon={Settings}  label="Settings" collapsed={collapsed} onClick={onItemClick} />
       <div className="mt-2 pt-2" style={{ borderTop:'1px solid rgba(255,255,255,0.04)' }}>
@@ -296,7 +214,6 @@ export default function Layout({ children }) {
   const navigate  = useNavigate()
   const location  = useLocation()
 
-  // Close mobile drawer on route change
   useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   const handleLogout = () => { logout(); navigate('/') }
@@ -308,9 +225,7 @@ export default function Layout({ children }) {
   return (
     <div className="flex h-screen overflow-hidden bg-[#080e1a]">
 
-      {/* ════════════════════════════════════════
-          DESKTOP SIDEBAR (hidden on mobile)
-      ════════════════════════════════════════ */}
+      {/* DESKTOP SIDEBAR */}
       <motion.aside
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration:0.3, ease:[0.22,1,0.36,1] }}
@@ -400,27 +315,22 @@ export default function Layout({ children }) {
         </motion.div>
       </motion.button>
 
-      {/* ════════════════════════════════════════
-          MOBILE DRAWER OVERLAY
-      ════════════════════════════════════════ */}
+      {/* MOBILE DRAWER */}
       <AnimatePresence>
         {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
               onClick={() => setMobileOpen(false)}
               className="fixed inset-0 z-40 md:hidden"
               style={{ background:'rgba(0,0,0,0.7)', backdropFilter:'blur(4px)' }}
             />
-            {/* Drawer */}
             <motion.div
               initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type:'spring', damping:28, stiffness:300 }}
               className="fixed left-0 top-0 bottom-0 w-72 z-50 md:hidden flex flex-col"
               style={{ background:'rgba(4,10,20,0.99)', borderRight:'1px solid rgba(255,255,255,0.08)' }}>
 
-              {/* Drawer Header */}
               <div className="h-16 flex items-center justify-between px-4 border-b flex-shrink-0"
                 style={{ borderColor:'rgba(255,255,255,0.06)' }}>
                 <div className="flex items-center gap-3">
@@ -439,7 +349,6 @@ export default function Layout({ children }) {
                 </button>
               </div>
 
-              {/* Drawer Nav */}
               <nav className="flex-1 py-4 px-3 overflow-y-auto space-y-0.5">
                 <NavList
                   collapsed={false}
@@ -449,7 +358,6 @@ export default function Layout({ children }) {
                 />
               </nav>
 
-              {/* Drawer User Footer */}
               <div className="p-3 border-t flex-shrink-0" style={{ borderColor:'rgba(255,255,255,0.06)' }}>
                 <div className="flex items-center gap-3 rounded-xl p-3"
                   style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
@@ -482,9 +390,7 @@ export default function Layout({ children }) {
         )}
       </AnimatePresence>
 
-      {/* ════════════════════════════════════════
-          MAIN CONTENT AREA
-      ════════════════════════════════════════ */}
+      {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
         {/* Top Header */}
@@ -492,7 +398,6 @@ export default function Layout({ children }) {
           style={{ background:'rgba(4,10,20,0.85)', borderBottom:'1px solid rgba(255,255,255,0.05)', backdropFilter:'blur(12px)' }}>
 
           <div className="flex items-center gap-3">
-            {/* Mobile hamburger */}
             <button onClick={() => setMobileOpen(true)}
               className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
               <Menu size={20}/>
@@ -504,7 +409,6 @@ export default function Layout({ children }) {
           </div>
 
           <div className="flex items-center gap-2 md:gap-3">
-            <SmartSearch />
             <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono ${rc.bg} ${rc.text} border ${rc.border}`}>
               {user?.is_default_admin ? '★ Default Admin' : rc.label}
             </div>
