@@ -14,7 +14,6 @@ export default defineConfig({
     }
   },
 
-  // ── Pre-bundle these so Vite doesn't mangle their ESM internals ──
   optimizeDeps: {
     include: [
       'lucide-react',
@@ -25,38 +24,39 @@ export default defineConfig({
       'recharts',
       'zustand',
     ],
-    exclude: [],
   },
 
   build: {
-    // Keep esbuild minification (fast) but fix the CJS interop issue
+    target: 'es2020',
+    minify: 'esbuild',
+
     commonjsOptions: {
       include: [/three/, /lucide-react/, /node_modules/],
-      transformMixedEsModules: true,   // ← key fix for "r is not a function"
+      transformMixedEsModules: true,
     },
 
     rollupOptions: {
       output: {
-        // Split heavy 3D/chart libs into their own chunks so they
-        // get their own scope and don't collide with app code
         manualChunks(id) {
-          if (id.includes('three') || id.includes('@react-three')) {
-            return 'vendor-three'
-          }
-          if (id.includes('recharts') || id.includes('d3-') || id.includes('victory-')) {
-            return 'vendor-charts'
-          }
-          if (id.includes('framer-motion')) {
-            return 'vendor-motion'
-          }
-          if (id.includes('lucide-react')) {
-            return 'vendor-icons'
-          }
-          if (id.includes('node_modules')) {
-            return 'vendor'
-          }
+          if (id.includes('three') || id.includes('@react-three')) return 'vendor-three'
+          if (id.includes('recharts') || id.includes('d3-'))        return 'vendor-charts'
+          if (id.includes('framer-motion'))                         return 'vendor-motion'
+          if (id.includes('lucide-react'))                          return 'vendor-icons'
+          if (id.includes('node_modules'))                          return 'vendor'
         },
       },
+      onwarn(warning, warn) {
+        if (
+          warning.code === 'THIS_IS_UNDEFINED'      ||
+          warning.code === 'SOURCEMAP_ERROR'        ||
+          warning.code === 'MODULE_LEVEL_DIRECTIVE'
+        ) return
+        warn(warning)
+      },
     },
+  },
+
+  esbuild: {
+    keepNames: true,   // ← THE actual fix: stops minifier renaming functions to 'r'
   },
 })
