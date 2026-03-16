@@ -5,7 +5,7 @@ import api from '../utils/api'
 import toast from 'react-hot-toast'
 import {
   BarChart3, Activity, TrendingDown, Zap, RefreshCw,
-  Cpu, FileText, MapPin, Tag
+  Cpu, FileText, MapPin, Tag, Clock
 } from 'lucide-react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -186,10 +186,20 @@ export default function Reports() {
           <h1 className="font-display text-3xl font-800 text-white">Reports</h1>
           <p className="text-slate-400 text-sm mt-1">Performance overview per compressor unit</p>
         </div>
-        <button onClick={load}
-          className="p-2.5 text-slate-400 hover:text-yellow-400 transition-colors rounded-xl hover:bg-yellow-400/10">
-          <RefreshCw size={18}/>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/reports')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-display font-600 transition-all"
+            style={{ background:'rgba(0,212,255,0.08)', border:'1px solid rgba(0,212,255,0.2)', color:'#00d4ff' }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(0,212,255,0.15)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(0,212,255,0.08)'}>
+            <Clock size={13}/> Saved Reports
+          </button>
+          <button onClick={load}
+            className="p-2.5 text-slate-400 hover:text-yellow-400 transition-colors rounded-xl hover:bg-yellow-400/10">
+            <RefreshCw size={18}/>
+          </button>
+        </div>
       </div>
       <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
         className="card text-center py-20"
@@ -218,10 +228,20 @@ export default function Reports() {
           <h1 className="font-display text-3xl font-800 text-white">Reports</h1>
           <p className="text-slate-400 text-sm mt-1">Performance overview per compressor unit</p>
         </div>
-        <button onClick={load}
-          className="p-2.5 text-slate-400 hover:text-yellow-400 transition-colors rounded-xl hover:bg-yellow-400/10">
-          <RefreshCw size={18}/>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/reports')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-display font-600 transition-all"
+            style={{ background:'rgba(0,212,255,0.08)', border:'1px solid rgba(0,212,255,0.2)', color:'#00d4ff' }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(0,212,255,0.15)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(0,212,255,0.08)'}>
+            <Clock size={13}/> Saved Reports
+          </button>
+          <button onClick={load}
+            className="p-2.5 text-slate-400 hover:text-yellow-400 transition-colors rounded-xl hover:bg-yellow-400/10">
+            <RefreshCw size={18}/>
+          </button>
+        </div>
       </div>
 
       {/* Summary bar */}

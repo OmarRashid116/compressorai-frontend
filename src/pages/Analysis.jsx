@@ -131,11 +131,15 @@ export default function Analysis() {
   const [loading, setLoading]       = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const [showAdvanced, setShowAdv]  = useState(false)
-  const [params, setParams]         = useState({
+  const [userParams, setUserParams] = useState({
     voltage:415, power_factor:0.9, compression_stages:2,
     p_low:7, p_high:10, q_low:45.23, q_high:35.47,
-    hours_per_day:24, cost_per_kwh:0, operating_days:365,
+    cost_per_kwh:0, operating_days:365,
+    total_lifetime_hours: '', total_lifetime_days: '',
   })
+  // backward-compat aliases so existing JSX below continues to work
+  const params    = userParams
+  const setParams = setUserParams
 
   useEffect(() => {
     if (!unitId) { navigate('/dashboard'); return }
@@ -191,8 +195,16 @@ export default function Analysis() {
     if (!dataset?.id) return
     setStep('running'); setLoading(true)
     try {
+      // Derive hours_per_day from lifetime fields if both filled
+      const hoursPerDay =
+        userParams.total_lifetime_days > 0 && userParams.total_lifetime_hours > 0
+          ? userParams.total_lifetime_hours / userParams.total_lifetime_days
+          : userParams.hours_per_day ?? 24
+
+      const payload = { ...userParams, hours_per_day: hoursPerDay }
+
       const fd = new FormData()
-      fd.append('params', JSON.stringify(params))
+      fd.append('params', JSON.stringify(payload))
       const res = await api.post(`/analysis/run/${dataset.id}`, fd)
       setResults(res.data); setStep('results')
       toast.success('Analysis complete! 🎯')
@@ -210,11 +222,19 @@ export default function Analysis() {
   /* ✅ FIX: Download report — correct payload structure matching backend reports.py */
   const downloadReport = async (type) => {
     if (!results) return
+
+    // Guard: warn if result_id is missing (path won't be saved to DB)
+    if (!results.result_id) {
+      toast.error('No analysis ID found — report will download but cannot be saved to history')
+      // Still proceed — download works even without DB path saving
+    }
+
     try {
       const payload = {
         compressor_id:    unitId,
         compressor_name:  unit?.unit_id || unitId,
         company_name:     unit?.location || 'Industrial Facility',
+        analysis_id:      results.result_id || null,   // ← saves path to DB
         analysis_results: {
           power_saving_percent:      results.power_saving_percent      || 0,
           best_electrical_power:     results.best_electrical_power     || 0,
@@ -229,12 +249,12 @@ export default function Analysis() {
           histogram_data:            results.histogram_data            || [],
           training_curve:            results.training_curve            || [],
           cluster_stats:             results.cluster_stats             || {},
-          kw_saved:            results.kw_saved            || 0,
-          energy_saved_kwh:    results.energy_saved_kwh    || 0,
-          cost_saved_annual:   results.cost_saved_annual   || 0,
-          cost_saved_monthly:  results.cost_saved_monthly  || 0,
+          kw_saved:          results.kw_saved          || 0,
+          energy_saved_kwh:  results.energy_saved_kwh  || 0,
+          cost_saved_annual: results.cost_saved_annual || 0,
+          cost_saved_monthly:results.cost_saved_monthly|| 0,
         },
-        user_params:    params,
+        user_params:    userParams,
         include_graphs: true,
       }
       const res = await api.post(`/reports/${type}`, payload, { responseType: 'blob' })
@@ -244,8 +264,17 @@ export default function Analysis() {
       a.download = `compressorai_report_${unit?.unit_id || unitId}.${type === 'pdf' ? 'pdf' : 'xlsx'}`
       a.click()
       URL.revokeObjectURL(url)
-      toast.success(`${type.toUpperCase()} report downloaded!`)
-    } catch { toast.error('Download failed') }
+
+      // Confirm download + saved to history (only if result_id was present)
+      if (results.result_id) {
+        toast.success(`${type.toUpperCase()} downloaded & saved to Reports History ✓`)
+      } else {
+        toast.success(`${type.toUpperCase()} report downloaded!`)
+      }
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.message || 'Unknown error'
+      toast.error(`Download failed: ${msg}`)
+    }
   }
 
   /* Download dataset */
@@ -549,46 +578,111 @@ export default function Analysis() {
                 </AnimatePresence>
               </div>
 
-              {/* Cost Savings Parameters */}
-              <div className="card space-y-4">
-                <h3 className="font-display font-600 text-green-400">💰 Cost Savings Parameters</h3>
-                <p className="text-slate-500 text-xs">Enter your electricity tariff to calculate annual cost savings after analysis. Leave 0 to skip.</p>
-                <div className="grid grid-cols-2 gap-4">
+              {/* ── Lifetime-based Cost Savings Parameters ── */}
+              <div className="card p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 flex items-center justify-center text-2xl">
+                    💰
+                  </div>
+                  <div>
+                    <h3 className="font-display font-700 text-xl text-white">Cost Savings Parameters</h3>
+                    <p className="text-sm text-slate-400 mt-0.5">Enter real lifetime usage of this compressor</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Tariff */}
                   <div>
                     <label className="label">Electricity Tariff</label>
                     <div className="relative">
                       <input type="number" step="0.01" min="0" className="input-field pr-20"
                         placeholder="e.g. 35"
-                        value={params.cost_per_kwh || ''}
-                        onChange={e => setParams({...params, cost_per_kwh: +e.target.value})}/>
+                        value={userParams.cost_per_kwh || ''}
+                        onChange={e => setUserParams(prev => ({ ...prev, cost_per_kwh: +e.target.value }))}/>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-mono">per kWh</span>
                     </div>
                     <p className="text-xs text-slate-600 mt-1">PKR, USD, or any currency</p>
                   </div>
+
+                  {/* Operating days */}
                   <div>
-                    <label className="label">Operating Hours / Day</label>
-                    <div className="relative">
-                      <input type="number" step="1" min="1" max="24" className="input-field pr-12"
-                        value={params.hours_per_day}
-                        onChange={e => setParams({...params, hours_per_day: Math.min(24, Math.max(1, +e.target.value))})}/>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-mono">h/day</span>
+                    <label className="label">Operating Days / Year</label>
+                    <div className="flex gap-2">
+                      {[365, 300, 250].map(d => (
+                        <button key={d} type="button"
+                          onClick={() => setUserParams(prev => ({ ...prev, operating_days: d }))}
+                          className={`flex-1 py-2.5 rounded-xl border font-display font-600 text-sm transition-all ${
+                            userParams.operating_days === d
+                              ? 'bg-green-400/15 border-green-400/40 text-green-400'
+                              : 'border-white/10 text-slate-400 hover:border-white/20'
+                          }`}>{d} days</button>
+                      ))}
                     </div>
                   </div>
-                </div>
-                <div>
-                  <label className="label">Operating Days / Year</label>
-                  <div className="flex gap-3">
-                    {[365, 300, 250].map(d => (
-                      <button key={d} type="button"
-                        onClick={() => setParams({...params, operating_days: d})}
-                        className={`flex-1 py-2.5 rounded-xl border font-display font-600 text-sm transition-all ${
-                          params.operating_days === d
-                            ? 'bg-green-400/15 border-green-400/40 text-green-400'
-                            : 'border-white/10 text-slate-400 hover:border-white/20'
-                        }`}>{d} days</button>
-                    ))}
+
+                  {/* Lifetime hours */}
+                  <div>
+                    <label className="label">Total lifetime operating hours</label>
+                    <div className="relative">
+                      <input type="number" min="0" step="any"
+                        placeholder="e.g. 12480"
+                        className="input-field pr-16"
+                        value={userParams.total_lifetime_hours ?? ''}
+                        onChange={e => {
+                          const raw = e.target.value
+                          if (raw === '') { setUserParams(prev => ({ ...prev, total_lifetime_hours: '' })); return }
+                          const num = Number(raw)
+                          if (!isNaN(num) && num >= 0) setUserParams(prev => ({ ...prev, total_lifetime_hours: num }))
+                        }}/>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-mono">hours</span>
+                    </div>
                   </div>
+
+                  {/* Lifetime days */}
+                  <div>
+                    <label className="label">Total lifetime operating days</label>
+                    <div className="relative">
+                      <input type="number" min="1" step="1"
+                        placeholder="e.g. 520"
+                        className="input-field pr-12"
+                        value={userParams.total_lifetime_days ?? ''}
+                        onChange={e => {
+                          const raw = e.target.value
+                          if (raw === '') { setUserParams(prev => ({ ...prev, total_lifetime_days: '' })); return }
+                          const num = Number(raw)
+                          if (!isNaN(num) && num >= 1) setUserParams(prev => ({ ...prev, total_lifetime_days: num }))
+                        }}/>
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-mono">days</span>
+                    </div>
+                  </div>
+
+                  {/* Helper note spanning both columns */}
+                  <p className="text-xs text-slate-500 mt-1 md:col-span-2">
+                    These values calculate a realistic <strong className="text-slate-400">average hours / day</strong> instead of assuming a fixed 24 h.
+                  </p>
                 </div>
+
+                {/* Calculated avg usage — both fields valid and > 0 */}
+                {userParams.total_lifetime_hours > 0 && userParams.total_lifetime_days >= 1 && (
+                  <div className="mt-5 p-4 bg-emerald-950/30 border border-emerald-800/40 rounded-xl">
+                    <div className="text-sm text-emerald-400 font-medium mb-1">Calculated average usage</div>
+                    <div className="text-3xl font-display font-bold text-emerald-300">
+                      {(userParams.total_lifetime_hours / userParams.total_lifetime_days).toFixed(1)}
+                      <span className="text-xl ml-2 text-emerald-400/70">hours / day</span>
+                    </div>
+                    <div className="text-xs text-slate-400 mt-2">
+                      This value will be used for realistic annual savings estimation
+                    </div>
+                  </div>
+                )}
+
+                {/* Warning — fields filled but values are invalid (zero / negative) */}
+                {userParams.total_lifetime_hours !== '' && userParams.total_lifetime_days !== '' &&
+                  (Number(userParams.total_lifetime_hours) <= 0 || Number(userParams.total_lifetime_days) <= 0) && (
+                  <div className="mt-5 p-4 bg-amber-950/30 border border-amber-800/40 rounded-xl text-amber-300 text-sm">
+                    Please enter positive values for both lifetime hours and days
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">

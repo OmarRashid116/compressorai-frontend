@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BarChart3, BookOpen, Settings,
   LogOut, Zap, ChevronRight, Shield,
-  Wrench, Clock, X, Menu
+  Wrench, Clock, X, Menu, FileText
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
 import toast from 'react-hot-toast'
@@ -175,12 +175,13 @@ function AnalysisNavButton({ collapsed, onClick }) {
 function NavList({ collapsed = false, onItemClick, hasAdmin, onComingSoon }) {
   return (
     <>
-      <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" collapsed={collapsed} onClick={onItemClick} />
+      <NavItem to="/dashboard" icon={LayoutDashboard} label="Dashboard"  collapsed={collapsed} onClick={onItemClick} />
       <div className="mb-0.5">
         <AnalysisNavButton collapsed={collapsed} onClick={onItemClick} />
       </div>
-      <NavItem to="/tutorial" icon={BookOpen}  label="Tutorial" collapsed={collapsed} onClick={onItemClick} />
-      <NavItem to="/settings" icon={Settings}  label="Settings" collapsed={collapsed} onClick={onItemClick} />
+      <NavItem to="/reports"   icon={FileText}       label="My Reports" collapsed={collapsed} onClick={onItemClick} />
+      <NavItem to="/tutorial"  icon={BookOpen}       label="Tutorial"   collapsed={collapsed} onClick={onItemClick} />
+      <NavItem to="/settings"  icon={Settings}       label="Settings"   collapsed={collapsed} onClick={onItemClick} />
       <div className="mt-2 pt-2" style={{ borderTop:'1px solid rgba(255,255,255,0.04)' }}>
         <motion.button whileHover={{ x: collapsed ? 0 : 3 }}
           onClick={() => { onComingSoon('maintenance'); onItemClick?.() }}

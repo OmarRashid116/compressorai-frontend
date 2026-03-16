@@ -3,16 +3,17 @@ import { Toaster } from 'react-hot-toast'
 import { useEffect } from 'react'
 import useAuthStore from './store/authStore'
 
-import Landing    from './pages/Landing'
-import Login      from './pages/Login'
-import Register   from './pages/Register'
-import VerifyEmail from './pages/VerifyEmail'
-import Dashboard  from './pages/Dashboard'
-import Analysis   from './pages/Analysis'
-import Settings   from './pages/Settings'
-import Tutorial   from './pages/Tutorial'
-import AdminPanel from './pages/AdminPanel'
-import Layout     from './components/ui/Layout'
+import Landing        from './pages/Landing'
+import Login          from './pages/Login'
+import Register       from './pages/Register'
+import VerifyEmail    from './pages/VerifyEmail'
+import Dashboard      from './pages/Dashboard'
+import Analysis       from './pages/Analysis'
+import Settings       from './pages/Settings'
+import Tutorial       from './pages/Tutorial'
+import AdminPanel     from './pages/AdminPanel'
+import ReportsHistory from './pages/ReportsHistory'   // ← NEW
+import Layout         from './components/ui/Layout'
 
 // ── Route Guards ──────────────────────────────────────────────
 function PrivateRoute({ children }) {
@@ -31,9 +32,10 @@ function AppWithLayout({ children }) {
 
 // ── App ───────────────────────────────────────────────────────
 export default function App() {
-  const { fetchMe, isAuthenticated, isLoading } = useAuthStore()
+  const { fetchMe, isAuthenticated, isLoading, checkAuth } = useAuthStore()
 
   useEffect(() => {
+    checkAuth()
     if (isAuthenticated) fetchMe()
   }, []) // eslint-disable-line
 
@@ -71,6 +73,7 @@ export default function App() {
         <Route path="/login"        element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/register"     element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/verify-email" element={<GuestRoute><VerifyEmail /></GuestRoute>} />
+        <Route path="/verify"       element={<GuestRoute><VerifyEmail /></GuestRoute>} />
         <Route path="/tutorial"     element={<Tutorial />} />
 
         {/* ── Private (need login) ── */}
@@ -90,6 +93,11 @@ export default function App() {
         }/>
         <Route path="/admin" element={
           <PrivateRoute><AppWithLayout><AdminPanel /></AppWithLayout></PrivateRoute>
+        }/>
+
+        {/* ── NEW: Reports History ── */}
+        <Route path="/reports" element={
+          <PrivateRoute><AppWithLayout><ReportsHistory /></AppWithLayout></PrivateRoute>
         }/>
 
         {/* ── Fallback ── */}
