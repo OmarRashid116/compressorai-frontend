@@ -258,7 +258,9 @@ function NavList({ collapsed = false, onItemClick, hasAdmin, onComingSoon }) {
       <div className="mb-0.5">
         <AnalysisNavButton collapsed={collapsed} onClick={onItemClick} />
       </div>
-      <NavItem to="/reports"  icon={FileText}  label="Reports"  collapsed={collapsed} onClick={onItemClick} />
+      {!hasAdmin && (
+        <NavItem to="/reports" icon={FileText} label="Reports" collapsed={collapsed} onClick={onItemClick} />
+      )}
       <NavItem to="/tutorial" icon={BookOpen}  label="Tutorial" collapsed={collapsed} onClick={onItemClick} />
       <NavItem to="/settings" icon={Settings}  label="Settings" collapsed={collapsed} onClick={onItemClick} />
       <div className="mt-2 pt-2" style={{ borderTop:'1px solid rgba(255,255,255,0.04)' }}>
