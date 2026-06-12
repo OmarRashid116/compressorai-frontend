@@ -1,0 +1,26 @@
+# netlify.toml — CompressorAI Frontend
+# Place this file in: D:\Final Year Project\compressorai-frontend\netlify.toml
+
+[build]
+  # Build command
+  command = "npm run build"
+  # Output directory after build
+  publish = "dist"
+
+# ── SPA Routing Fix ────────────────────────────────────────────
+# React Router uses client-side routing (/dashboard, /analysis etc.)
+# Without this, refreshing any page gives 404 on Netlify
+# This rule redirects ALL requests to index.html so React Router handles them
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# ── Security Headers ───────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection       = "1; mode=block"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

@@ -1,56 +1,61 @@
-import axios from "axios"
+/**
+ * api.js — CompressorAI v6
+ * Axios instance with:
+ *  - Auto base URL from env variable (VITE_API_URL)
+ *  - JWT token injection on every request
+ *  - 401 auto-logout
+ *  - ngrok header bypass (for ngrok browser warning)
+ */
+import axios from 'axios'
 
-// ── Backend URL ───────────────────────────────────────────────
-// Local development  → http://localhost:8000
-// Production (Replit) → https://compressorai-backend--fyp2026.replit.app
+// ── Base URL ───────────────────────────────────────────────────
+// Priority order:
+//  1. VITE_API_URL env variable  → set in .env or Netlify dashboard
+//  2. Fallback to localhost:8000  → local development default
 //
-// Auto-detect: if running on localhost, use local backend
-const IS_LOCAL = window.location.hostname === "localhost" ||
-                 window.location.hostname === "127.0.0.1"
-
-const API_BASE_URL = IS_LOCAL
-  ? "http://localhost:8000"
-  : "https://compressorai-backend--fyp2026.replit.app"
+// For Netlify deploy: set VITE_API_URL = https://xxxx.ngrok-free.app/api
+// For local dev:      leave blank OR set VITE_API_URL = http://localhost:8000/api
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 120000, // 2 minutes (ML analysis may take longer)
+  baseURL: BASE_URL,
+  timeout: 120000, // 2 minutes — ML analysis can take long
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
+    // ── ngrok header ─────────────────────────────────────────
+    // Bypasses ngrok's browser warning page ("You are visiting an ngrok tunnel...")
+    // Without this, ngrok shows an HTML warning instead of JSON response
+    'ngrok-skip-browser-warning': 'true',
   },
 })
 
-// Attach JWT token to every request
+// ── Request interceptor — inject JWT token ─────────────────────
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth_token")
-
+    const token = localStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-
-    // When sending a file, delete Content-Type so the
-    // browser sets the correct multipart/form-data boundary
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"]
-    }
-
     return config
   },
   (error) => Promise.reject(error)
 )
 
-// Handle responses
+// ── Response interceptor — handle 401 auto-logout ─────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Auto logout if token expired
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token")
-      localStorage.removeItem("auth_user")
-      window.location.href = "/login"
+      // Token expired or invalid → clear storage and redirect to login
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      // Only redirect if not already on a public page
+      const publicPaths = ['/login', '/register', '/verify-email', '/verify', '/', '/tutorial']
+      const isPublic = publicPaths.some(p => window.location.pathname === p)
+      if (!isPublic) {
+        window.location.href = '/login'
+      }
     }
-
     return Promise.reject(error)
   }
 )
