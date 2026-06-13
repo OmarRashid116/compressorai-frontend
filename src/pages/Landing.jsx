@@ -13,7 +13,7 @@ import AliRashidPhoto           from "../assets/photos/Ali Rashid.jpeg"
 import MalikMuhammadRafayPhoto  from "../assets/photos/Rafay.jpeg"
 import MuhammadBilalAkberPhoto  from "../assets/photos/Bilal.jpeg"
 import OmarRashidPhoto          from '../assets/photos/Omar Rashid.jpg'
-// Rafay & Bilal photos not provided — initials avatar will show for them
+import NEDUETLogo               from '../assets/photos/NEDUET_logo.svg.png'
 
 const CompressorScene = lazy(() => import('../components/ui/CompressorScene'))
 
@@ -201,10 +201,9 @@ function TeamModal({ onClose }) {
             style={{ background: 'rgba(250,204,21,0.04)', border: '1px solid rgba(250,204,21,0.14)' }}
           >
             <img
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/NED_University_logo.svg/200px-NED_University_logo.svg.png"
+              src={NEDUETLogo}
               alt="NEDUET Logo"
               className="w-16 h-16 object-contain flex-shrink-0"
-              onError={e => { e.target.style.display = 'none' }}
             />
             <div>
               <div className="font-display font-800 text-white text-base">CompressorAI</div>
@@ -468,10 +467,9 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/NED_University_logo.svg/200px-NED_University_logo.svg.png"
+              src={NEDUETLogo}
               alt="NEDUET"
               className="w-7 h-7 object-contain opacity-80"
-              onError={e => { e.target.style.display = 'none' }}
             />
             <div className="w-px h-5 bg-white/10" />
             <div className="w-9 h-9 rounded-xl border border-yellow-400/40 bg-yellow-400/10 flex items-center justify-center animate-glow-yellow">
@@ -783,10 +781,9 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 pb-6 border-b border-white/5">
             <div className="flex items-center gap-3">
               <img
-                src="https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/NED_University_logo.svg/200px-NED_University_logo.svg.png"
+                src={NEDUETLogo}
                 alt="NEDUET"
                 className="w-8 h-8 object-contain opacity-70"
-                onError={e => { e.target.style.display = 'none' }}
               />
               <div>
                 <div className="text-slate-300 text-xs font-display font-600">NED University of Engineering &amp; Technology</div>
@@ -803,7 +800,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-slate-600 text-sm font-mono">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-yellow-400/50" />
-              <span>CompressorAI © 2024–2026 — NEDUET Final Year Project</span>
+              <span>CompressorAI © NEDUET Final Year Project</span>
             </div>
             <span>DBSCAN + GBR + GA · Rotary Screw Compressors Only</span>
           </div>
