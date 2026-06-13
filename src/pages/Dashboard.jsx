@@ -209,14 +209,12 @@ function AdminTypeCard({ type, i }) {
           onMouseLeave={e => e.currentTarget.style.background='rgba(250,204,21,0.08)'}>
           <BarChart3 size={13}/> Optimize
         </button>
-        <button onClick={e => e.stopPropagation()} title="Coming Soon"
-          className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-display font-600 text-sm relative"
-          style={{ background:'rgba(148,163,184,0.05)', border:'1px solid rgba(148,163,184,0.12)', color:'#64748b', cursor:'not-allowed' }}>
+        <button onClick={e => { e.stopPropagation(); navigate('/maintenance') }}
+          className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-display font-600 text-sm transition-all"
+          style={{ background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', color:'#22c55e' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(34,197,94,0.15)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(34,197,94,0.08)'}>
           <Wrench size={13}/> Maintain
-          <span className="absolute -top-2 -right-1 text-[9px] font-mono px-1.5 py-0.5 rounded-full"
-            style={{ background:'rgba(250,204,21,0.15)', color:'#facc15', border:'1px solid rgba(250,204,21,0.2)' }}>
-            Soon
-          </span>
         </button>
       </div>
     </motion.div>
